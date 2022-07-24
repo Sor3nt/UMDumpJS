@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <title>UMDumpJs</title>
+    <style>
+        [class*="col-"] {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            background-color: rgba(86, 61, 124, .15);
+            border: 1px solid rgba(86, 61, 124, .2);
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="container">
+
+    <h1>UMDatabase UMDumpJs</h1>
+    <p class="lead">
+        Demonstration of UMDumpJs, lightweight, fast and cross compatible.<br/>
+        Extracting any important Information from a UMD ISO.
+    </p>
+
+    <h3>Demo</h3>
+    <div id="drop_zone" class="container d-flex" style="width: 100%;height: 150px; border: 1px dotted red">
+        <div class="row justify-content-center align-self-center text-center" style="width: 100%;font-size: 20px;font-weight: bold;">
+            DROP ISO HERE
+        </div>
+    </div>
+
+    <hr/>
+
+    <div id="results">
+
+        <div>
+            <h3>Content Image</h3>
+            <div style="text-align: center">
+               <img id="isoImg" style="image-rendering: pixelated; width: 300px" />
+            </div>
+
+            <h3>ISO Header</h3>
+            <div class="row">
+                <div class="col-md-4">Name</div>
+                <div class="col-md-4" data-path="header.gameName"></div>
+                <div class="col-md-4"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">Volume Set</div>
+                <div class="col-md-4" data-path="pvd.volumeSetId"></div>
+                <div class="col-md-4"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">Data Prep</div>
+                <div class="col-md-4" data-path="pvd.dataPrepId"></div>
+                <div class="col-md-4"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">Publisher</div>
+                <div class="col-md-4" data-path="pvd.publisherId"></div>
+                <div class="col-md-4"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">Identifier</div>
+                <div class="col-md-4" data-path="header.identifier"></div>
+                <div class="col-md-4"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">Application</div>
+                <div class="col-md-4" data-path="pvd.applicationId"></div>
+                <div class="col-md-4"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">Application Area</div>
+                <div class="col-md-4" data-path="header.applicationArea.text"></div>
+                <div class="col-md-4" data-path="header.applicationArea.hex" style="overflow: scroll;"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">ISO ID</div>
+                <div class="col-md-4" data-path="header.isoId"></div>
+                <div class="col-md-4"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">ISO Version</div>
+                <div class="col-md-4" data-path="header.version"></div>
+                <div class="col-md-4"></div>
+            </div>
+
+        </div>
+
+
+        <br/>
+        <br/>
+
+        <div id="paramsUpdate">
+            <h3>PARAM.SFO Update</h3>
+
+        </div>
+
+        <br/>
+        <br/>
+
+        <div id="paramGame">
+            <h3>PARAM.SFO Game</h3>
+
+        </div>
+
+        <br/>
+        <br/>
+
+        <div id="files">
+            <h3>FileSystem</h3>
+
+        </div>
+
+
+
+    </div>
+
+
+
+</div>
+
+
+<script type="module">
+    import Dump from "./src/Dump.js";
+
+    new Dump({
+        dropZone: 'drop_zone'
+    },function (isoInfo) {
+        console.log("DUMP", isoInfo);
+
+        createResult(isoInfo);
+    });
+
+
+/*
+    Code for the Demo
+ */
+    function createResult(isoInfo) {
+
+        $('#isoImg').attr('src', 'data:image/jpg;base64,' + arrayBufferToBase64(isoInfo.icon.data));
+
+        $('[data-path]').each(function (index, element) {
+            let path = $(element).attr('data-path');
+            let info = eval('isoInfo.' + path);
+            $(element).html(info);
+        });
+
+        isoInfo.filesystem.forEach(function (child) {
+            createFileTree(child);
+        });
+
+        isoInfo.sfo.forEach(function (child) {
+            createSFOEntries(child);
+        });
+
+    }
+
+    function createSFOEntries(entries) {
+
+        let target = entries[1].value === "UG" ? "paramGame" : "paramsUpdate";
+
+        entries.forEach(function (entry) {
+            let template = $(`<div class="row">
+                <div class="col-md-6">${entry.name}</div>
+                <div class="col-md-6">${entry.value}</div>
+            </div>`);
+
+            $('#' + target).append(template);
+
+        });
+
+    }
+
+    function createFileTree(entry) {
+
+
+        let template = $(`<div class="row">
+                <div class="col-md-6">${entry.path}</div>
+                <div class="col-md-3">${entry.creationTime.year}-${entry.creationTime.month}-${entry.creationTime.day} ${entry.creationTime.hour}:${entry.creationTime.minute}:${entry.creationTime.second}</div>
+                <div class="col-md-3">${entry.size||''}</div>
+            </div>`);
+
+        $('#files').append(template);
+
+        entry.children.forEach(function (child) {
+            createFileTree(child);
+        })
+    }
+
+    function arrayBufferToBase64( buffer ) {
+        var binary = '';
+        var bytes = new Uint8Array( buffer );
+        var len = bytes.byteLength;
+        for (var i = 0; i < len; i++) {
+            binary += String.fromCharCode( bytes[ i ] );
+        }
+        return window.btoa( binary );
+    }
+</script>
+
+</body>
+</html>
