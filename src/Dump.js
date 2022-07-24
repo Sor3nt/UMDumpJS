@@ -1,3 +1,6 @@
+/**
+ * Developed by Sor3nt <sor3nt@gmail.com> for UMDatabase.net
+ */
 import FileDrop from "./FileDrop.js";
 import Iso9660 from "./parser/Iso9660.js";
 import SfoParser from "./parser/ParamSfo.js";

@@ -1,3 +1,6 @@
+/**
+ * Developed by Sor3nt <sor3nt@gmail.com> for dixmor-hospital.com
+ */
 export default class NBinary{
 
     /**
@@ -93,24 +96,11 @@ export default class NBinary{
 
     }
 
-    // getUint64(dv, littleEndian) {
-    //     var low = 4, high = 0;
-    //     if (littleEndian)
-    //     {
-    //         low = 0;
-    //         high = 4;
-    //     }
-    //
-    //     return (dv.getUint32(high, littleEndian) << 32) |
-    //         dv.getUint32(low, littleEndian);
-    // }
-
     consume(bytes, type, little) {
         little = little === undefined  ? true : little;
         let view = new DataView(this.data, this._current);
 
         this._current += bytes;
-
 
         if (type === 'uint64') return view.getBigUint64(0, little);
         // if (type === 'uint64') return this.getUint64(view, little);

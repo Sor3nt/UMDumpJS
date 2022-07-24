@@ -1,11 +1,10 @@
+/**
+ * Developed by Sor3nt <sor3nt@gmail.com> for UMDatabase.net
+ */
 import NBinary from "./NBinary.js";
 
 export default class FileDrop{
-
-
     openRequests = 0;
-
-
 
     constructor(id, callback){
         let _this = this;
@@ -30,7 +29,6 @@ export default class FileDrop{
             console.error(err);
         }
     }
-
 
     async scanFiles(item) {
 
@@ -57,7 +55,6 @@ export default class FileDrop{
 
             this.openRequests++;
             this.processFile(await this.getFile(item), item.fullPath)
-
         }
     }
 
@@ -100,8 +97,4 @@ export default class FileDrop{
 
         reader.readAsArrayBuffer(file);
     }
-
-
-
-
 }

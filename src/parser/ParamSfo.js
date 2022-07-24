@@ -1,3 +1,6 @@
+/**
+ * Developed by Sor3nt <sor3nt@gmail.com> for UMDatabase.net
+ */
 import NBinary from "./../NBinary.js";
 
 export default class ParamSfo{

@@ -1,4 +1,6 @@
-
+/**
+ * Developed by Sor3nt <sor3nt@gmail.com> for UMDatabase.net
+ */
 export default class Iso9660{
 
     BLOCK_SIZE = 2048;
