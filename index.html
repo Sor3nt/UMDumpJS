@@ -132,7 +132,8 @@
     import Dump from "./src/Dump.js";
 
     new Dump({
-        dropZone: 'drop_zone'
+        dropZone: 'drop_zone',
+        grepBytesFromFiles: 16,
     },function (isoInfo) {
         console.log("DUMP", isoInfo);
 

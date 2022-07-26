@@ -16,11 +16,17 @@ export default class Iso9660{
     files = [];
     folders = [];
 
+    config = {};
+
+    constructor(config){
+        this.config = config;
+    }
+
     /**
      *
      * @param {{name: string, binary: NBinary, fileNamePath: string}} file
      */
-    parse(file){
+    async parse(file){
 
         this.file = file;
         this.header = this.parseHeader();
@@ -28,7 +34,7 @@ export default class Iso9660{
         let tablePos = this.header.lPathTbl1 * this.BLOCK_SIZE;
         this.file.binary.setCurrent(tablePos);
 
-        return {
+        let isoInfo = {
             header: {
                 isoId: this.header.isoId,
                 version: this.header.version,
@@ -61,7 +67,30 @@ export default class Iso9660{
             )
         };
 
+        let _this = this;
+        isoInfo.tree = {};
+        for (const file of this.files) {
+            if (file.isFolder) continue;
+            let content = _this.getFileContent(file);
+            let sha1 = await crypto.subtle.digest('SHA-1', content.data);
+            content = null;
+
+            let result =  {
+                'sha1': _this.buf2hex(sha1),
+                'size': file.size,
+                'date': `${file.creationTime.year}-${file.creationTime.month}-${file.creationTime.day} ${file.creationTime.hour}:${file.creationTime.minute}:${file.creationTime.second}`
+            };
+
+            if (this.config.grepBytesFromFiles !== undefined && this.config.grepBytesFromFiles > 0)
+                result.byteDump = this.buf2hex(this.getFileContent(file, this.config.grepBytesFromFiles).data);
+
+            isoInfo.tree[file.path] = result;
+        }
+
+        return isoInfo;
+
     }
+
 
     buf2hex(buffer) {
         return [...new Uint8Array(buffer)]
@@ -171,12 +200,13 @@ export default class Iso9660{
 
     /**
      *
-     * @param directory {{offset: int, dataLength: int }}
+     * @param file {{offset: int, size: int }}
+     * @param len {int|undefined}
      * @returns {NBinary}
      */
-    getFileContent(directory){
-        this.file.binary.setCurrent(directory.offset * this.BLOCK_SIZE);
-        return this.file.binary.consume(directory.dataLength, 'nbinary');
+    getFileContent(file, len){
+        this.file.binary.setCurrent(file.offset * this.BLOCK_SIZE);
+        return this.file.binary.consume(len || file.size, 'nbinary');
     }
 
     getCleanFileSystemTree(entries){
@@ -203,10 +233,16 @@ export default class Iso9660{
             children:[]
         };
 
-        if (result.isFolder === false)
+        if (result.isFolder === false){
             result.size = entry.dataLength;
 
-            let _this = this;
+            this.files.push(result);
+        }else{
+            this.folders.push(result);
+
+        }
+
+        let _this = this;
         entry.children.forEach(function (child) {
             let entry = _this.getCleanFileSystemTreeEntry(child, root);
             result.children.push(entry);
@@ -241,10 +277,6 @@ export default class Iso9660{
                 subContent.forEach(function (dir) {
                     directory.children.push(dir);
                 });
-
-                this.folders.push(directory);
-            }else{
-                this.files.push(directory);
             }
 
             results.push(directory);

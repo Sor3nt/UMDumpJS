@@ -28,23 +28,26 @@ export default class Dump {
      *
      * @param {{name: string, binary: NBinary, fileNamePath: string}} file
      */
-    onFileDrop(file) {
+    async onFileDrop(file) {
         let sfoParser = new SfoParser();
+        let _this = this;
 
         file.binary.setCurrent(0);
 
         try {
-            let iso9660Parser = new Iso9660();
-            let isoInfo = iso9660Parser.parse(file);
+            let iso9660Parser = new Iso9660(this.config);
+            let isoInfo = await iso9660Parser.parse(file);
 
             isoInfo.sfo = [];
             iso9660Parser.files.forEach(function (file) {
                 if (file.name.toUpperCase() === "PARAM.SFO"){
                     let content = iso9660Parser.getFileContent(file);
                     isoInfo.sfo.push(sfoParser.parse(content));
+
                 } else if (file.name.toUpperCase() === "ICON0.PNG"){
                     isoInfo.icon = iso9660Parser.getFileContent(file);
                 }
+
             });
 
             this.callback(isoInfo);
