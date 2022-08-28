@@ -14,6 +14,8 @@ export default class Iso9660{
      */
     file;
 
+    onProgressCallback = function (){};
+
     header = {};
 
     files = [];
@@ -21,8 +23,9 @@ export default class Iso9660{
 
     config = {};
 
-    constructor(config){
+    constructor(config, onProgressCallback){
         this.config = config;
+        this.onProgressCallback = onProgressCallback;
     }
 
     /**
@@ -32,21 +35,36 @@ export default class Iso9660{
     async parse(file){
 
         this.file = file;
+        this.onProgressCallback('Reading ISO Header');
         this.header = this.parseHeader();
 
         let tablePos = this.header.lPathTbl1 * this.BLOCK_SIZE;
         this.file.binary.setCurrent(tablePos);
 
+        this.onProgressCallback('Create SHA1 Hash');
         let sha1 = await crypto.subtle.digest('SHA-1', file.binary.data);
+
+        this.onProgressCallback('Create SHA256 Hash');
         let sha256 = await crypto.subtle.digest('SHA-256', file.binary.data);
+
+        this.onProgressCallback('Create CRC32 Hash');
+        let crc32H = crc32(file.binary.data);
+
+        this.onProgressCallback('Create MD5 Hash');
+        let md5H = md5.ArrayBuffer.hash(file.binary.data);
+
+        this.onProgressCallback('Parse Filesystem');
+        let fileSystem = this.getCleanFileSystemTree(
+            this.parseFileSystem(this.header.rootDirectory.offset, this.header.rootDirectory.dataLength)
+        );
 
         let isoInfo = {
             size: file.binary.data.byteLength,
 
             hashes: {
-                crc32: crc32(file.binary.data),
+                crc32: crc32H,
                 sha1: this.buf2hex(sha1),
-                md5: md5.ArrayBuffer.hash(file.binary.data),
+                md5: md5H,
                 sha256: this.buf2hex(sha256)
             },
 
@@ -77,10 +95,10 @@ export default class Iso9660{
             lsb: this.parseTable(),
             msb: this.parseTable(),
 
-            filesystem: this.getCleanFileSystemTree(
-                this.parseFileSystem(this.header.rootDirectory.offset, this.header.rootDirectory.dataLength)
-            )
+            filesystem: fileSystem
         };
+
+        this.onProgressCallback('Hashing every single file');
 
         let _this = this;
         isoInfo.tree = {};
@@ -102,6 +120,7 @@ export default class Iso9660{
             isoInfo.tree[file.path] = result;
         }
 
+        this.onProgressCallback('Done');
         return isoInfo;
 
     }
@@ -269,6 +288,7 @@ export default class Iso9660{
 
 
     parseFileSystem(lbaAddress, length){
+
         this.file.binary.setCurrent(lbaAddress * this.BLOCK_SIZE);
         let binary = this.file.binary.consume(length, 'nbinary');
 

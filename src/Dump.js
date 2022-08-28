@@ -9,16 +9,19 @@ import UmdData from "./parser/UmdData.js";
 export default class Dump {
 
     callback = function () {};
+    onProgressCallback = function () {};
     config = {};
 
     /**
      *
      * @param config {{dropZone: string}}
      * @param callback
+     * @param onProgressCallback
      */
-    constructor(config, callback) {
+    constructor(config, callback, onProgressCallback) {
         this.config = config;
         this.callback = callback;
+        this.onProgressCallback = onProgressCallback;
         let _this = this;
         new FileDrop(config.dropZone, function (file) {
             _this.onFileDrop(file)
@@ -36,7 +39,7 @@ export default class Dump {
         file.binary.setCurrent(0);
 
         try {
-            let iso9660Parser = new Iso9660(this.config);
+            let iso9660Parser = new Iso9660(this.config, this.onProgressCallback);
             let isoInfo = await iso9660Parser.parse(file);
 
             isoInfo.sfo = [];
