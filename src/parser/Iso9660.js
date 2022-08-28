@@ -1,6 +1,9 @@
 /**
  * Developed by Sor3nt <sor3nt@gmail.com> for UMDatabase.net
  */
+import crc32 from "./../hash/crc32.js";
+import md5 from "./../hash/md5.js";
+
 export default class Iso9660{
 
     BLOCK_SIZE = 2048;
@@ -34,7 +37,19 @@ export default class Iso9660{
         let tablePos = this.header.lPathTbl1 * this.BLOCK_SIZE;
         this.file.binary.setCurrent(tablePos);
 
+        let sha1 = await crypto.subtle.digest('SHA-1', file.binary.data);
+        let sha256 = await crypto.subtle.digest('SHA-256', file.binary.data);
+
         let isoInfo = {
+            size: file.binary.data.byteLength,
+
+            hashes: {
+                crc32: crc32(file.binary.data),
+                sha1: this.buf2hex(sha1),
+                md5: md5.ArrayBuffer.hash(file.binary.data),
+                sha256: this.buf2hex(sha256)
+            },
+
             header: {
                 isoId: this.header.isoId,
                 version: this.header.version,
