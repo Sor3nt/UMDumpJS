@@ -3,7 +3,8 @@
  */
 import FileDrop from "./FileDrop.js";
 import Iso9660 from "./parser/Iso9660.js";
-import SfoParser from "./parser/ParamSfo.js";
+import ParamSfo from "./parser/ParamSfo.js";
+import UmdData from "./parser/UmdData.js";
 
 export default class Dump {
 
@@ -29,8 +30,8 @@ export default class Dump {
      * @param {{name: string, binary: NBinary, fileNamePath: string}} file
      */
     async onFileDrop(file) {
-        let sfoParser = new SfoParser();
-        let _this = this;
+        let sfoParser = new ParamSfo();
+        let umdDataParser = new UmdData();
 
         file.binary.setCurrent(0);
 
@@ -46,6 +47,9 @@ export default class Dump {
 
                 } else if (file.name.toUpperCase() === "ICON0.PNG"){
                     isoInfo.icon = iso9660Parser.getFileContent(file);
+                } else if (file.name.toUpperCase() === "UMD_DATA.BIN"){
+                    let content = iso9660Parser.getFileContent(file);
+                    isoInfo.umdData = umdDataParser.parse(content);
                 }
 
             });

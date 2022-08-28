@@ -58,6 +58,14 @@ export default class NBinary{
         return this.consume(4, 'float32',little);
     }
 
+
+    buf2hex(buffer) {
+        return [...new Uint8Array(buffer)]
+            .map(x => x.toString(16).padStart(2, '0'))
+            .join('');
+    }
+
+
     parseStruct(obj){
 
         let result = {};
@@ -72,6 +80,8 @@ export default class NBinary{
                         result[attr] = this.consume(obj[attr][1], 'nbinary').getString(obj[attr][2]);
                 }else if (obj[attr][0] === "nbinary"){
                     result[attr] = this.consume(obj[attr][1], 'nbinary');
+                }else if (obj[attr][0] === "hex"){
+                    result[attr] = this.buf2hex( this.consume(obj[attr][1], 'nbinary').data );
                 }else if (obj[attr][0] === "seek"){
                     this.seek(obj[attr][1]);
                    // result[attr] = undefined;
