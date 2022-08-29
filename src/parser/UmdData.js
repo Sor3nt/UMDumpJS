@@ -14,9 +14,9 @@ export default class UmdData{
         return binary.parseStruct({
             id:     ['string', 10],
             spacer:    ['seek', 1],
-            key:      ['hex', 16],
+            key:      ['string', 16],
             spacer2:    ['seek', 1],
-            unknown:      ['hex', 4],
+            unknown:      ['string', 4],
             spacer3:    ['seek', 1],
             category:     ['string', 14],
         });

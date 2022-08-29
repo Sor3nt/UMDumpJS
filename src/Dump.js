@@ -43,8 +43,10 @@ export default class Dump {
             let isoInfo = await iso9660Parser.parse(file);
 
             isoInfo.sfo = [];
+            isoInfo.sfoPath = [];
             iso9660Parser.files.forEach(function (file) {
                 if (file.name.toUpperCase() === "PARAM.SFO"){
+                    isoInfo.sfoPath.push(file.path.substring(1)); //filepath so we know which SFO
                     let content = iso9660Parser.getFileContent(file);
                     isoInfo.sfo.push(sfoParser.parse(content));
 

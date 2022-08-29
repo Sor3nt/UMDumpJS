@@ -111,13 +111,13 @@ export default class Iso9660{
             let result =  {
                 'sha1': _this.buf2hex(sha1),
                 'size': file.size,
-                'date': `${file.creationTime.year}-${file.creationTime.month}-${file.creationTime.day} ${file.creationTime.hour}:${file.creationTime.minute}:${file.creationTime.second}`
-            };
+                'date': `${file.creationTime.year}-${file.creationTime.month.toString().padStart(2, "0")}-${file.creationTime.day.toString().padStart(2, "0")} ${file.creationTime.hour.toString().padStart(2, "0")}:${file.creationTime.minute.toString().padStart(2, "0")}:${file.creationTime.second.toString().padStart(2, "0")}`
+            }; //.toString().padStart(2, "0") to fill
 
             if (this.config.grepBytesFromFiles !== undefined && this.config.grepBytesFromFiles > 0)
                 result.byteDump = this.buf2hex(this.getFileContent(file, this.config.grepBytesFromFiles).data);
 
-            isoInfo.tree[file.path] = result;
+            isoInfo.tree[file.path.substring(1)] = result; //remove the dot with substring
         }
 
         this.onProgressCallback('Done');
@@ -190,7 +190,7 @@ export default class Iso9660{
             volSetSize:       'uInt32',
             volSeqNum:        'uInt32',
             lBlockSize:       'uInt32',
-            pathTblSizeLe:    'uInt32',
+            pathTblSize:      'uInt32',
             pathTblSizeBe:    'uInt32',
             lPathTbl1:        'uInt32',
             lPathTbl2:        'uInt32',
@@ -288,18 +288,26 @@ export default class Iso9660{
 
 
     parseFileSystem(lbaAddress, length){
-
         this.file.binary.setCurrent(lbaAddress * this.BLOCK_SIZE);
-        let binary = this.file.binary.consume(length, 'nbinary');
+        let binary = this.file.binary.consume(length , 'nbinary');
 
         let results = [];
+        let current = 0;
         while(true){
             let dirLen = binary.consume(1, 'uint8');
             binary.seek(-1);
-            if (dirLen === 0) break;
+
+            if (dirLen === 0) {
+                current += this.BLOCK_SIZE;
+
+                if (current > binary.remain())
+                    break;
+
+                binary.setCurrent(current);
+                continue;
+            }
 
             let directoryBinary = binary.consume(dirLen, 'nbinary');
-
             let directory = this.parseDirectory(directoryBinary);
             if (directory.nameLength === 1) continue;
 
@@ -350,7 +358,6 @@ export default class Iso9660{
         })};
 
         header.name = binary.consume(header.nameLength, 'string');
-
         return header;
     }
 }
