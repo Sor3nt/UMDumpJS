@@ -39,7 +39,6 @@ export default class Iso9660{
         this.header = this.parseHeader();
 
         let tablePos = this.header.lPathTbl1 * this.BLOCK_SIZE;
-        this.file.binary.setCurrent(tablePos);
 
         this.onProgressCallback('Create SHA1 Hash');
         let sha1 = await crypto.subtle.digest('SHA-1', file.binary.data);
@@ -57,6 +56,8 @@ export default class Iso9660{
         let fileSystem = this.getCleanFileSystemTree(
             this.parseFileSystem(this.header.rootDirectory.offset, this.header.rootDirectory.dataLength)
         );
+
+        this.file.binary.setCurrent(tablePos);
 
         let isoInfo = {
             size: file.binary.data.byteLength,
@@ -134,8 +135,8 @@ export default class Iso9660{
 
     parseTable(){
 
-        let tableBinary = this.file.binary.consume(2048, 'nbinary');
-        tableBinary.seek(10); //header ?
+        let tableBinary = this.file.binary.consume(this.header.pathTblSize, 'nbinary');
+        this.file.binary.seek(10); //header ?
 
         let entries = [];
         while(tableBinary.remain() > 12){
