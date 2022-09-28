@@ -168,18 +168,19 @@
     }
 
     function createSFOEntries(entries) {
-        let target = entries[1].value === "UG" ? "paramGame" : "paramsUpdate";
+        let target = entries['CATEGORY'] === "UG" ? "paramGame" : "paramsUpdate";
 
-        entries.forEach(function (entry) {
+        for(let i in entries){
+            if (!entries.hasOwnProperty(i)) continue;
+
             let template = $(`<div class="row">
-                <div class="col-md-6">${entry.name}</div>
-                <div class="col-md-6">${entry.value}</div>
+                <div class="col-md-6">${i}</div>
+                <div class="col-md-6">${entries[i]}</div>
             </div>`);
 
             $('#' + target).append(template);
 
-        });
-
+        }
     }
 
     function createFileTree(entry) {

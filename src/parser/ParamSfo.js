@@ -77,14 +77,15 @@ export default class ParamSfo{
 
         });
 
-
-        return entries.map(function (entry) {
-            return {
-                name: entry.name,
-                value: entry.data
-            };
+        let fields = {};
+        entries.forEach(function (entry) {
+            fields[entry.name] = entry.data;
         });
+
+
+        return {
+            version: version,
+            fields: fields
+        }
     }
-
-
 }
