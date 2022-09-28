@@ -65,7 +65,8 @@ export default class ParamSfo{
 
             switch(entry.type){
                 case _this.PSF_TYPE_STR:
-                    entry.data = binary.getString(0x00);
+                    let utf8 = binary.getStringUTF8(0x00);
+                    entry.data = new TextDecoder().decode(utf8);
                     break;
                 case _this.PSF_TYPE_VAL:
                     entry.data = binary.consume(4, 'uint32');

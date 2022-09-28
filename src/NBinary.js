@@ -192,6 +192,34 @@ export default class NBinary{
         return name;
     }
 
+    getStringUTF8(delimiter, doPadding) {
+
+        let name = '';
+        let nameIndex = 0;
+        let buffer = new ArrayBuffer(255);
+        let view = new DataView(buffer);
+
+        while(this.remain() > 0){
+            let val = this.consume(1, 'uint8');
+            if (val === delimiter) break;
+            view.setUint8(nameIndex, val);
+            nameIndex++;
+        }
+
+        let nameLen = nameIndex;
+
+        if (doPadding === true){
+            nameIndex++;
+
+            if (4 - (nameIndex % 4) !== 4){
+                this._current += 4 - (nameIndex % 4);
+            }
+
+        }
+
+        return buffer.slice(0, nameLen);
+    }
+
     seek(bytes) {
         this._current = this._current + bytes;
     }
